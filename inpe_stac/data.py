@@ -239,7 +239,7 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
         logging.info('get_collection_items() - default_where: {}'.format(default_where))
 
         # if query is a dict, then get all available fields to search
-        # Specification: https://github.com/radiantearth/stac-spec/blob/v0.7.0/api-spec/extensions/query/README.md
+        # Specification: https://github.com/radiantearth/stac-spec/blob/v0.9.0/api-spec/extensions/query/README.md
         if isinstance(query, dict):
             for field, value in query.items():
                 # eq, neq, lt, lte, gt, gte
@@ -326,8 +326,6 @@ def make_json_collection(collection_result):
     if len(assets) == 1:
         assets = loads(assets[0]['assets'])
 
-        logging.info('make_json_collection - assets:  %s', assets)
-
         for asset in assets:
             eo_bands.append(
                 {
@@ -335,8 +333,6 @@ def make_json_collection(collection_result):
                     'common_name': asset['band']
                 }
             )
-
-    logging.info('make_json_collection - \n\n\n eo_bands:  %s \n\n\n', eo_bands)
 
     collection = {
         'stac_version': API_VERSION,
@@ -395,7 +391,7 @@ def make_json_items(items, links):
         feature = OrderedDict()
 
         feature['stac_version'] = API_VERSION
-        feature['stac_extensions'] = ['eo']
+        feature['stac_extensions'] = ['eo', 'query']
         feature['type'] = 'Feature'
         feature['id'] = i['id']
         feature['collection'] = i['collection']

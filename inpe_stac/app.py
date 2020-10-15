@@ -39,7 +39,7 @@ def after_request(response):
 
 ##################################################
 # OGC API - Features Endpoints
-# Specification: https://github.com/radiantearth/stac-spec/blob/master/api-spec/api-spec.md#ogc-api---features-endpoints
+# Specification: https://github.com/radiantearth/stac-spec/blob/v0.9.0/api-spec/api-spec.md#ogc-api---features-endpoints
 ##################################################
 
 @app.route("/", methods=["GET"])
@@ -82,7 +82,7 @@ def conformance():
 @catch_generic_exceptions
 def collections():
     """
-    Specification: https://github.com/radiantearth/stac-spec/blob/v0.7.0/collection-spec/collection-spec.md#collection-fields
+    Specification: https://github.com/radiantearth/stac-spec/blob/v0.9.0/collection-spec/collection-spec.md#collection-fields
     """
 
     result = get_collections()
@@ -105,7 +105,7 @@ def collections():
 @catch_generic_exceptions
 def collections_collections_id(collection_id):
     """
-    Specification: https://github.com/radiantearth/stac-spec/blob/v0.7.0/collection-spec/collection-spec.md#collection-fields
+    Specification: https://github.com/radiantearth/stac-spec/blob/v0.9.0/collection-spec/collection-spec.md#collection-fields
     """
 
     result = get_collections(collection_id)
@@ -126,8 +126,8 @@ def collections_collections_id(collection_id):
 @catch_generic_exceptions
 def collections_collections_id_items(collection_id):
     """
-    Example of full route:
-        - http://localhost:8089/inpe-stac/collections/CBERS4A_MUX_L2_DN/items?bbox=-68.0273437,-25.0059726,-34.9365234,0.3515602&limit=10000&time=2019-12-22T00:00:00/2020-01-22T23:59:00
+    Specifications:
+        - https://github.com/radiantearth/stac-spec/blob/v0.9.0/api-spec/api-spec.md#filter-parameters-and-fields
     """
 
     # parameters
@@ -196,7 +196,7 @@ def collections_collections_id_items_items_id(collection_id, item_id):
 
 ##################################################
 # STAC Endpoints
-# Specification: https://github.com/radiantearth/stac-spec/blob/master/api-spec/api-spec.md#stac-endpoints
+# Specification: https://github.com/radiantearth/stac-spec/blob/v0.9.0/api-spec/api-spec.md#stac-endpoints
 ##################################################
 
 @app.route("/stac", methods=["GET"])
@@ -205,13 +205,14 @@ def collections_collections_id_items_items_id(collection_id, item_id):
 @catch_generic_exceptions
 def stac():
     """
-    Specification: https://github.com/radiantearth/stac-spec/blob/v0.7.0/catalog-spec/catalog-spec.md#catalog-fields
+    Specification: https://github.com/radiantearth/stac-spec/blob/v0.9.0/catalog-spec/catalog-spec.md#catalog-fields
     """
 
     collections = get_collections()
 
     catalog = {
         "stac_version": API_VERSION,
+        'stac_extensions': [],
         "id": "inpe-stac",
         "description": "INPE STAC Catalog",
         "links": [
@@ -239,6 +240,12 @@ def stac():
 @log_function_footer
 @catch_generic_exceptions
 def stac_search():
+    """
+    Specifications:
+        - https://github.com/radiantearth/stac-spec/blob/v0.9.0/api-spec/api-spec.md#filter-parameters-and-fields
+        - https://github.com/radiantearth/stac-spec/blob/v0.9.0/api-spec/extensions/query/README.md
+    """
+
     logging.info('stac_search()')
 
     logging.info('stac_search() - method: %s', request.method)
