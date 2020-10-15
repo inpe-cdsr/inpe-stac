@@ -3,7 +3,7 @@ from os import getenv
 from logging import DEBUG, INFO
 
 
-API_VERSION = getenv('API_VERSION', '0.7')
+API_VERSION = getenv('API_VERSION', '0.7.0')
 
 BASE_URI = getenv('BASE_URI', 'http://www2.dgi.inpe.br/inpe-stac/')
 

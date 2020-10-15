@@ -200,17 +200,17 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
 
             # if time is a string, then I convert it to list by splitting it
             if isinstance(time, str):
-                time = time.split("/")
+                time = time.split('/')
 
             # if there is time_start and time_end, then get them
             if len(time) == 2:
                 params['time_start'], params['time_end'] = time
-                default_where.append("date <= :time_end")
+                default_where.append('date <= :time_end')
             # if there is just time_start, then get it
             elif len(time) == 1:
                 params['time_start'] = time[0]
 
-            default_where.append("date >= :time_start")
+            default_where.append('date >= :time_start')
 
         logging.info('get_collection_items() - default_where: {}'.format(default_where))
 
@@ -347,6 +347,8 @@ def make_json_items(items, links):
 
         feature = OrderedDict()
 
+        feature['stac_version'] = API_VERSION
+        feature['stac_extensions'] = ['eo']
         feature['type'] = 'Feature'
         feature['id'] = i['id']
         feature['collection'] = i['collection']
@@ -363,6 +365,10 @@ def make_json_items(items, links):
         feature['geometry'] = geometry
         feature['bbox'] = bbox(feature['geometry']['coordinates'])
 
+        ##################################################
+        # properties
+        ##################################################
+
         feature['properties'] = {
             # format the datetime
             'datetime': datetime.fromisoformat(str(i['datetime'] )).isoformat(),
@@ -371,18 +377,34 @@ def make_json_items(items, links):
             'satellite': i['satellite'],
             'sensor': i['sensor'],
             'cloud_cover': i['cloud_cover'],
-            'sync_loss': i['sync_loss']
+            'sync_loss': i['sync_loss'],
+            'eo:gsd': -1
+            # 'eo:bands' is going to be added below
         }
 
+        ##################################################
+        # assets
+        ##################################################
+
         feature['assets'] = {}
+        eo_bands = []
 
         # convert string json to dict json
         i['assets'] = loads(i['assets'])
 
         for asset in i['assets']:
+            eo_bands.append(
+                {
+                    'name': asset['band'],
+                    'common_name': asset['band']
+                }
+            )
+
             feature['assets'][asset['band']] = {
                 'href': getenv('TIF_ROOT') + asset['href'],
-                'type': 'image/vnd.stac.geotiff'
+                'type': 'image/vnd.stac.geotiff',
+                # get index of the last added item
+                'eo:bands': [len(eo_bands) - 1]
             }
             feature['assets'][asset['band'] + '_xml'] = {
                 'href': getenv('TIF_ROOT') + asset['href'].replace('.tif', '.xml'),
@@ -394,8 +416,15 @@ def make_json_items(items, links):
             'type': 'image/png'
         }
 
+        # add eo:bands to properties
+        feature['properties']['eo:bands'] = eo_bands
+
+        ##################################################
+        # links
+        ##################################################
+
         feature['links'] = deepcopy(links)
-        feature['links'][0]['href'] += i['collection'] + "/items/" + i['id']
+        feature['links'][0]['href'] += i['collection'] + '/items/' + i['id']
         feature['links'][1]['href'] += i['collection']
         feature['links'][2]['href'] += i['collection']
 
@@ -421,7 +450,7 @@ def do_query(sql, **kwargs):
     engine = sqlalchemy.create_engine(connection)
 
     sql = text(sql)
-    engine.execute("SET @@group_concat_max_len = 1000000;")
+    engine.execute('SET @@group_concat_max_len = 1000000;')
 
     result = engine.execute(sql, kwargs)
     result = result.fetchall()
