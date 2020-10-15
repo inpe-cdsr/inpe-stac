@@ -63,6 +63,30 @@ def get_collections(collection_id=None):
 
 
 @log_function_header
+def __get_assets_by_collection(collection_id):
+    logging.info('__get_assets_by_collection - collection_id: %s', collection_id)
+
+    kwargs = { 'collection_id': collection_id }
+
+    query = '''
+        SELECT assets 
+        FROM `stac_item` 
+        WHERE collection = :collection_id 
+        LIMIT 1;
+    '''
+
+    logging.info('__get_assets_by_collection - query:  %s', query)
+
+    result, elapsed_time = do_query(query, **kwargs)
+
+    logging.info('__get_assets_by_collection - elapsed_time:  %s', timedelta(seconds=elapsed_time))
+
+    # logging.debug('__get_assets_by_collection - result:  %s', result)
+
+    return result
+
+
+@log_function_header
 def __search_stac_item_view(where, params):
     logging.info('__search_stac_item_view')
 
@@ -294,8 +318,29 @@ def make_json_collection(collection_result):
     start_date = collection_result['start_date'].isoformat()
     end_date = None if collection_result['end_date'] is None else collection_result['end_date'].isoformat()
 
+    eo_bands = []
+
+    assets = __get_assets_by_collection(collection_id)
+
+    # if there is just one element, I get it and I create the 'eo:bands' property
+    if len(assets) == 1:
+        assets = loads(assets[0]['assets'])
+
+        logging.info('make_json_collection - assets:  %s', assets)
+
+        for asset in assets:
+            eo_bands.append(
+                {
+                    'name': asset['band'],
+                    'common_name': asset['band']
+                }
+            )
+
+    logging.info('make_json_collection - \n\n\n eo_bands:  %s \n\n\n', eo_bands)
+
     collection = {
         'stac_version': API_VERSION,
+        'stac_extensions': ['eo'],
         'id': collection_id,
         'title': collection_id,
         'description': collection_result['description'],
@@ -307,7 +352,9 @@ def make_json_collection(collection_result):
             ],
             'temporal': [ start_date, end_date ]
         },
-        'properties': {},
+        'properties': {
+            'eo:bands': eo_bands
+        },
         'links': [
             {'href': f'{BASE_URI}collections/{collection_id}', 'rel': 'self'},
             {'href': f'{BASE_URI}collections/{collection_id}/items', 'rel': 'items'},
