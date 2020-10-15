@@ -340,8 +340,8 @@ def make_json_items(items, links):
         return gjson
 
     for i in items:
-        # print('\n\nid: ', i['id'])
-        # print('item: ', end='')
+        # logging.info('make_json_items - id: %s', i['id'])
+        # logging.info('make_json_items - item:')
         # pp.pprint(i)
         # print('\n\n')
 

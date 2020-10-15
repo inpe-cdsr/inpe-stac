@@ -184,10 +184,7 @@ def collections_collections_id_items_items_id(collection_id, item_id):
 
     gjson = make_json_items(item, links)
 
-    logging.info('collections_collections_id_items_items_id() - gjson: %s', gjson)
-
-    logging.info('collections_collections_id_items_items_id() - features: %s', gjson['features'])
-    logging.info('collections_collections_id_items_items_id() - features: %s', bool(gjson['features']))
+    # logging.debug('collections_collections_id_items_items_id() - gjson: %s', gjson)
 
     if gjson['features']:
         # I'm looking for one item by item_id, ergo just one feature will be returned,

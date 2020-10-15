@@ -12,21 +12,21 @@ Install a specific Python version using pyenv:
 
 .. code-block:: shell
 
-        pyenv install 3.7.0
+        pyenv install 3.8.5
 
 
 Create a Python environment with the Python version above through pyenv:
 
 .. code-block:: shell
 
-        pyenv virtualenv 3.7.0 inpe_stac
+        pyenv virtualenv 3.8.5 inpe_cdsr_inpe_stac
 
 
 Activate the virtual environment:
 
 .. code-block:: shell
 
-        pyenv activate inpe_stac
+        pyenv activate inpe_cdsr_inpe_stac
 
 
 Install the requirements:
@@ -40,7 +40,7 @@ Export the environment variables:
 
 .. code-block:: shell
 
-        set -a && source environment.dev.env && set +a
+        set -a && source environment.env && set +a
 
 
 Run the service:

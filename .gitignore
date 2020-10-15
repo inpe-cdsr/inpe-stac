@@ -1,4 +1,4 @@
-environment.*.env
+environment.env
 
 example/*
 

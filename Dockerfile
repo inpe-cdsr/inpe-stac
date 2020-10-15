@@ -1,4 +1,4 @@
-FROM python:3.7-slim-buster
+FROM python:3.8.5-slim-buster
 
 RUN apt-get update -y \
     && apt-get install -y gcc libmariadb-dev\
