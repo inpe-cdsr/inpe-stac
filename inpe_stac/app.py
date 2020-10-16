@@ -143,6 +143,7 @@ def collections_collections_id_items(collection_id):
 
     items, matched, _ = get_collection_items(**params)
 
+    # links to each Item inside ItemCollection
     links = [
         {"href": f"{BASE_URI}collections/", "rel": "self"},
         {"href": f"{BASE_URI}collections/", "rel": "parent"},
@@ -152,12 +153,13 @@ def collections_collections_id_items(collection_id):
 
     items_collection = make_json_items(items, links)
 
-    # items_collection['links'] = [
-    #     {
-    #         "rel": "self",
-    #         "href": f"{BASE_URI}collections/"
-    #     }
-    # ]
+    # links to this ItemCollection
+    items_collection['links'] = [
+        {"href": f"{BASE_URI}collections/{collection_id}/items", "rel": "self"},
+        {"href": f"{BASE_URI}collections/{collection_id}", "rel": "parent"},
+        {"href": f"{BASE_URI}collections", "rel": "collection"},
+        {"href": f"{BASE_URI}stac", "rel": "root"}
+    ]
 
     items_collection['context'] = {
         "page": params['page'],
