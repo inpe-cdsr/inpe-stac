@@ -376,6 +376,8 @@ def make_json_items(items, links):
     features = []
 
     gjson = OrderedDict()
+    gjson['stac_version'] = API_VERSION
+    gjson['stac_extensions'] = []
     gjson['type'] = 'FeatureCollection'
 
     if len(items) == 0:

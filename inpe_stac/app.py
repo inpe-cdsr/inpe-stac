@@ -152,6 +152,13 @@ def collections_collections_id_items(collection_id):
 
     items_collection = make_json_items(items, links)
 
+    # items_collection['links'] = [
+    #     {
+    #         "rel": "self",
+    #         "href": f"{BASE_URI}collections/"
+    #     }
+    # ]
+
     items_collection['context'] = {
         "page": params['page'],
         "limit": params['limit'],
