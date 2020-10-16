@@ -161,6 +161,10 @@ def collections_collections_id_items(collection_id):
         {"href": f"{BASE_URI}stac", "rel": "root"}
     ]
 
+    # add 'context' extension to STAC
+    # Specification: https://github.com/radiantearth/stac-spec/blob/v0.9.0/api-spec/extensions/context/README.md#context-extension-specification
+    items_collection['stac_extensions'].append('context')
+
     items_collection['context'] = {
         "page": params['page'],
         "limit": params['limit'],
@@ -191,16 +195,14 @@ def collections_collections_id_items_items_id(collection_id, item_id):
         {"href": f"{BASE_URI}stac", "rel": "root"}
     ]
 
-    gjson = make_json_items(item, links)
+    items_collection = make_json_items(item, links)
 
-    # logging.debug('collections_collections_id_items_items_id() - gjson: %s', gjson)
-
-    if gjson['features']:
+    if items_collection['features']:
         # I'm looking for one item by item_id, ergo just one feature will be returned,
         # then I get this one feature in order to return it
-        gjson = gjson['features'][0]
+        items_collection = items_collection['features'][0]
 
-    return jsonify(gjson)
+    return jsonify(items_collection)
 
 
 ##################################################
@@ -228,6 +230,10 @@ def stac():
             {
                 "href": f"{BASE_URI}stac",
                 "rel": "self"
+            },
+            {
+                "href": f"{BASE_URI}collections",
+                "rel": "collections"
             }
         ]
     }
@@ -312,17 +318,21 @@ def stac_search():
         {'href': f'{BASE_URI}stac', 'rel': 'root'}
     ]
 
-    gjson = make_json_items(items, links=links)
+    items_collection = make_json_items(items, links=links)
 
-    gjson['context'] = {
+    # add 'context' extension to STAC
+    # Specification: https://github.com/radiantearth/stac-spec/blob/v0.9.0/api-spec/extensions/context/README.md#context-extension-specification
+    items_collection['stac_extensions'].append('context')
+
+    items_collection['context'] = {
         'page': params['page'],
         'limit': params['limit'],
         'matched': matched,
-        'returned': len(gjson['features']),
+        'returned': len(items_collection['features']),
         'meta': None if not metadata_related_to_collections else metadata_related_to_collections
     }
 
-    return jsonify(gjson)
+    return jsonify(items_collection)
 
 
 ##################################################

@@ -69,9 +69,9 @@ def __get_assets_by_collection(collection_id):
     kwargs = { 'collection_id': collection_id }
 
     query = '''
-        SELECT assets 
-        FROM `stac_item` 
-        WHERE collection = :collection_id 
+        SELECT assets
+        FROM `stac_item`
+        WHERE collection = :collection_id
         LIMIT 1;
     '''
 
@@ -447,13 +447,13 @@ def make_json_items(items, links):
 
             feature['assets'][asset['band']] = {
                 'href': getenv('TIF_ROOT') + asset['href'],
-                'type': 'image/vnd.stac.geotiff',
+                'type': 'image/tiff; application=geotiff',
                 # get index of the last added item
                 'eo:bands': [len(eo_bands) - 1]
             }
             feature['assets'][asset['band'] + '_xml'] = {
                 'href': getenv('TIF_ROOT') + asset['href'].replace('.tif', '.xml'),
-                'type': 'text/xml'
+                'type': 'application/xml'
             }
 
         feature['assets']['thumbnail'] = {
