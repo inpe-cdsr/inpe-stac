@@ -201,12 +201,16 @@ def collections_collections_id_items_items_id(collection_id, item_id):
         item, links, item_stac_extensions=['eo']
     )
 
+    # if an item was not returned, then I return an empty item
+    item = {}
+
+    # else, if an item was returned, then I return the item
     if items_collection['features']:
         # I'm looking for one item by item_id, ergo just one feature will be returned,
         # then I get this one feature in order to return it
-        items_collection = items_collection['features'][0]
+        item = items_collection['features'][0]
 
-    return jsonify(items_collection)
+    return jsonify(item)
 
 
 ##################################################
