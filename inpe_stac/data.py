@@ -363,7 +363,7 @@ def make_json_collection(collection_result):
     return collection
 
 
-def make_json_items(items, links):
+def make_json_items(items, links, item_stac_extensions=None):
     # logging.debug('make_geojson - items: {}'.format(items))
     # logging.debug('make_geojson - links: {}'.format(links))
 
@@ -393,7 +393,7 @@ def make_json_items(items, links):
         feature = OrderedDict()
 
         feature['stac_version'] = API_VERSION
-        feature['stac_extensions'] = ['eo', 'query']
+        feature['stac_extensions'] = item_stac_extensions
         feature['type'] = 'Feature'
         feature['id'] = i['id']
         feature['collection'] = i['collection']

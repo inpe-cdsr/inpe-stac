@@ -151,7 +151,9 @@ def collections_collections_id_items(collection_id):
         {"href": f"{BASE_URI}stac", "rel": "root"}
     ]
 
-    items_collection = make_json_items(items, links)
+    items_collection = make_json_items(
+        items, links, item_stac_extensions=['eo']
+    )
 
     # links to this ItemCollection
     items_collection['links'] = [
@@ -195,7 +197,9 @@ def collections_collections_id_items_items_id(collection_id, item_id):
         {"href": f"{BASE_URI}stac", "rel": "root"}
     ]
 
-    items_collection = make_json_items(item, links)
+    items_collection = make_json_items(
+        item, links, item_stac_extensions=['eo']
+    )
 
     if items_collection['features']:
         # I'm looking for one item by item_id, ergo just one feature will be returned,
@@ -318,7 +322,9 @@ def stac_search():
         {'href': f'{BASE_URI}stac', 'rel': 'root'}
     ]
 
-    items_collection = make_json_items(items, links=links)
+    items_collection = make_json_items(
+        items, links, item_stac_extensions=['eo', 'query']
+    )
 
     # add 'context' extension to STAC
     # Specification: https://github.com/radiantearth/stac-spec/blob/v0.9.0/api-spec/extensions/context/README.md#context-extension-specification
