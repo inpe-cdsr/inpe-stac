@@ -143,6 +143,8 @@ def collections_collections_id_items(collection_id):
         'limit': int(request.args.get('limit', 10))
     }
 
+    logging.info(f'collections_collections_id_items - params: {params}')
+
     items, matched, _ = get_collection_items(**params)
 
     # links to each Item inside ItemCollection
@@ -181,10 +183,10 @@ def collections_collections_id_items(collection_id):
 @log_function_footer
 @catch_generic_exceptions
 def collections_collections_id_items_items_id(collection_id, item_id):
-    logging.info('collections_collections_id_items_items_id()')
+    logging.info('collections_collections_id_items_items_id')
 
-    logging.info('collections_collections_id_items_items_id() - collection_id: %s', collection_id)
-    logging.info('collections_collections_id_items_items_id() - item_id: %s', item_id)
+    logging.info(f'collections_collections_id_items_items_id - collection_id: {collection_id}')
+    logging.info(f'collections_collections_id_items_items_id - item_id: {item_id}')
 
     item, _, _ = get_collection_items(collection_id=collection_id, item_id=item_id)
 
@@ -195,7 +197,7 @@ def collections_collections_id_items_items_id(collection_id, item_id):
         {"href": f"{BASE_URI}stac", "rel": "root"}
     ]
 
-    items_collection = make_json_items(
+    item_collection = make_json_items(
         item, links, item_stac_extensions=['eo']
     )
 
@@ -203,10 +205,10 @@ def collections_collections_id_items_items_id(collection_id, item_id):
     item = {}
 
     # else, if an item was returned, then I return the item
-    if items_collection['features']:
+    if item_collection['features']:
         # I'm looking for one item by item_id, ergo just one feature will be returned,
         # then I get this one feature in order to return it
-        item = items_collection['features'][0]
+        item = item_collection['features'][0]
 
     return jsonify(item)
 
@@ -267,15 +269,15 @@ def stac_search():
         - https://github.com/radiantearth/stac-spec/blob/v0.9.0/api-spec/extensions/query/README.md
     """
 
-    logging.info('stac_search()')
+    logging.info('stac_search')
 
-    logging.info('stac_search() - method: %s', request.method)
+    logging.info(f'stac_search - method: {request.method}')
 
     if request.method == "POST":
         if request.is_json:
             request_json = request.get_json()
 
-            logging.info('stac_search() - request_json: %s', request_json)
+            logging.info(f'stac_search - request_json: {request_json}')
 
             params = {
                 'bbox': request_json.get('bbox', None),
@@ -291,7 +293,7 @@ def stac_search():
                 params['bbox'] = ','.join([str(x) for x in params['bbox']])
 
             if params['ids'] is not None:
-                params['ids'] = ','.join([id for id in params['ids']])
+                params['ids'] = ','.join(params['ids'])
 
             # if params['collections'] is not None:
             #     params['collections'] = ','.join([collection for collection in params['collections']])
@@ -313,7 +315,7 @@ def stac_search():
         if isinstance(params['collections'], str):
             params['collections'] = params['collections'].split(',')
 
-    logging.info('stac_search() - params: %s', params)
+    logging.info(f'stac_search() - params: {params}')
 
     items, matched, metadata_related_to_collections = get_collection_items(**params)
 
