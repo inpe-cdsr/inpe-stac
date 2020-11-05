@@ -86,47 +86,47 @@ def __search_stac_item_view(where, params):
 
     # if the user is looking for more than one collection, then I search by partition
     if 'collections' in params:
-        sql = '''
+        sql = f'''
             SELECT *
             FROM (
                 SELECT *, row_number() over (partition by collection) rn
                 FROM stac_item
                 WHERE
-                    {}
+                    {where}
             ) t
             WHERE rn >= :page AND rn <= :limit;
-        '''.format(where)
+        '''
     # else, I search with a normal query
     else:
-        sql = '''
+        sql = f'''
             SELECT *
             FROM stac_item
             WHERE
-                {}
+                {where}
             LIMIT :page, :limit
-        '''.format(where)
+        '''
 
     # add just where clause to query, because I want to get the number of total results
-    sql_count = '''
+    sql_count = f'''
         SELECT collection, COUNT(id) as matched
         FROM stac_item
         WHERE
-            {}
+            {where}
         GROUP BY collection;
-    '''.format(where)
+    '''
 
-    # logging.info('__search_stac_item_view - where: {}'.format(where))
-    logging.info('__search_stac_item_view - params: {}'.format(params))
+    # logging.info(f'__search_stac_item_view - where: {where}')
+    logging.info(f'__search_stac_item_view - params: {params}')
 
-    logging.info('__search_stac_item_view - sql_count: {}'.format(sql_count))
-    logging.info('__search_stac_item_view - sql: {}'.format(sql))
+    logging.info(f'__search_stac_item_view - sql_count: {sql_count}')
+    logging.info(f'__search_stac_item_view - sql: {sql}')
 
     # execute the queries
     result_count, elapsed_time = do_query(sql_count, **params)
-    logging.info('__search_stac_item_view - elapsed_time - sql_count: {}'.format(timedelta(seconds=elapsed_time)))
+    logging.info(f'__search_stac_item_view - elapsed_time - sql_count: {timedelta(seconds=elapsed_time)}')
 
     result, elapsed_time = do_query(sql, **params)
-    logging.info('__search_stac_item_view - elapsed_time - sql: {}'.format(timedelta(seconds=elapsed_time)))
+    logging.info(f'__search_stac_item_view - elapsed_time - sql: {timedelta(seconds=elapsed_time)}')
 
     # if `result` or `result_count` is None, then I return an empty list instead
     if result is None:
@@ -144,9 +144,9 @@ def __search_stac_item_view(where, params):
 
         result_count = sorted(result_count, key=lambda key: key['collection'])
 
-    # logging.debug('__search_stac_item_view - result: \n{}\n'.format(result))
-    logging.info('__search_stac_item_view - returned: {}'.format(len_result(result)))
-    logging.info('__search_stac_item_view - result_count: \n{}\n'.format(result_count))
+    # logging.debug(f'__search_stac_item_view - result: \n{result}\n')
+    logging.info(f'__search_stac_item_view - returned: {len_result(result)}')
+    logging.info(f'__search_stac_item_view - result_count: {result_count}')
 
     return result, result_count
 
@@ -177,7 +177,7 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
             default_where.append('FIND_IN_SET(id, :ids)')
             params['ids'] = ','.join(ids)
 
-        logging.info('get_collection_items() - default_where: {}'.format(default_where))
+        logging.info(f'get_collection_items() - default_where: {default_where}')
 
         __result, __matched = __search_stac_item_view(default_where, params)
 
@@ -225,7 +225,7 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
 
             default_where.append('date >= :time_start')
 
-        logging.info('get_collection_items() - default_where: {}'.format(default_where))
+        logging.info(f'get_collection_items() - default_where: {default_where}')
 
         # if query is a dict, then get all available fields to search
         # Specification: https://github.com/radiantearth/stac-spec/blob/v0.9.0/api-spec/extensions/query/README.md
@@ -233,31 +233,31 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
             for field, value in query.items():
                 # eq, neq, lt, lte, gt, gte
                 if 'eq' in value:
-                    default_where.append('{0} = {1}'.format(field, value['eq']))
+                    default_where.append(f'{field} = {value["eq"]}')
                 if 'neq' in value:
-                    default_where.append('{0} != {1}'.format(field, value['neq']))
+                    default_where.append(f'{field} != {value["neq"]}')
                 if 'lt' in value:
-                    default_where.append('{0} < {1}'.format(field, value['lt']))
+                    default_where.append(f'{field} < {value["lt"]}')
                 if 'lte' in value:
-                    default_where.append('{0} <= {1}'.format(field, value['lte']))
+                    default_where.append(f'{field} <= {value["lte"]}')
                 if 'gt' in value:
-                    default_where.append('{0} > {1}'.format(field, value['gt']))
+                    default_where.append(f'{field} > {value["gt"]}')
                 if 'gte' in value:
-                    default_where.append('{0} >= {1}'.format(field, value['gte']))
+                    default_where.append(f'{field} >= {value["gte"]}')
                 # startsWith, endsWith, contains
                 if 'startsWith' in value:
-                    default_where.append('{0} LIKE \'{1}%\''.format(field, value['startsWith']))
+                    default_where.append(f'{field} LIKE \'{value["startsWith"]}%\'')
                 if 'endsWith' in value:
-                    default_where.append('{0} LIKE \'%{1}\''.format(field, value['endsWith']))
+                    default_where.append(f'{field} LIKE \'%{value["endsWith"]}\'')
                 if 'contains' in value:
-                    default_where.append('{0} LIKE \'%{1}%\''.format(field, value['contains']))
+                    default_where.append(f'{field} LIKE \'%{value["contains"]}%\'')
 
         if collection_id is not None and isinstance(collection_id, str):
             collections = [collection_id]
 
         # search for collections
         if collections is not None:
-            logging.info('get_collection_items() - collections: {}'.format(collections))
+            logging.info(f'get_collection_items() - collections: {collections}')
 
             # append the query at the beginning of the list
             default_where.insert(0, 'FIND_IN_SET(collection, :collections)')
@@ -294,9 +294,9 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
             result += __result
             matched += reduce(lambda x, y: x + y['matched'], __matched, 0) if __matched else 0
 
-    logging.info('get_collection_items() - matched: {}'.format(matched))
-    # logging.debug('get_collection_items() - result: \n\n{}\n\n'.format(result))
-    logging.debug('get_collection_items() - metadata: {}'.format(metadata_related_to_collections))
+    logging.info(f'get_collection_items() - matched: {matched}')
+    # logging.debug(f'get_collection_items() - result: \n{result}\n')
+    logging.debug(f'get_collection_items() - metadata: {metadata_related_to_collections}')
 
     return result, matched, metadata_related_to_collections
 
@@ -351,8 +351,8 @@ def make_json_collection(collection_result):
 
 
 def make_json_items(items, links, item_stac_extensions=None):
-    # logging.debug('make_geojson - items: {}'.format(items))
-    # logging.debug('make_geojson - links: {}'.format(links))
+    # logging.debug(f'make_geojson - items: {items}')
+    # logging.debug(f'make_geojson - links: {links}')
 
     if items is None:
         return {
@@ -468,7 +468,7 @@ def make_json_items(items, links, item_stac_extensions=None):
 
     gjson['features'] = features
 
-    # logging.debug('make_geojson - gjson: {}'.format(gjson))
+    # logging.debug(f'make_geojson - gjson: {gjson}')
 
     return gjson
 
@@ -476,9 +476,7 @@ def make_json_items(items, links, item_stac_extensions=None):
 def do_query(sql, **kwargs):
     start_time = time()
 
-    connection = 'mysql://{}:{}@{}/{}'.format(
-        getenv('DB_USER'), getenv('DB_PASS'), getenv('DB_HOST'), getenv('DB_NAME')
-    )
+    connection = f'mysql://{getenv("DB_USER")}:{getenv("DB_PASS")}@{getenv("DB_HOST")}/{getenv("DB_NAME")}'
     engine = sqlalchemy.create_engine(connection)
 
     sql = text(sql)
