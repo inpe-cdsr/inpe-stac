@@ -130,15 +130,17 @@ def collections_collections_id_items(collection_id):
         - https://github.com/radiantearth/stac-spec/blob/v0.9.0/api-spec/api-spec.md#filter-parameters-and-fields
     """
 
+    logging.info('collections_collections_id_items')
+
     # parameters
     params = {
         'collection_id': collection_id,
         'bbox': request.args.get('bbox', None),
         'time': request.args.get('time', None),
-        'intersects': request.args.get('intersects', None),
+        'ids': request.args.get('ids', None),
+        'intersects': request.args.get('intersects', None),  # not implemented yet
         'page': int(request.args.get('page', 1)),
-        'limit': int(request.args.get('limit', 10)),
-        'ids': request.args.get('ids', None)
+        'limit': int(request.args.get('limit', 10))
     }
 
     items, matched, _ = get_collection_items(**params)
@@ -157,9 +159,15 @@ def collections_collections_id_items(collection_id):
 
     item_collection = make_json_item_collection(item_collection, params, matched)
 
+    # remove unnecessary property to build the URL below
+    del params['collection_id']
+    # convert 'params' from dict to str to add to the URL
+    params = '&'.join([f'{k}={v}' for k, v in params.items() if v is not None])
+
     # links to this ItemCollection
     item_collection['links'] = [
-        {"href": f"{BASE_URI}collections/{collection_id}/items", "rel": "self"},
+        {"href": f"{BASE_URI}collections/{collection_id}/items?{params}", "rel": "self"},
+        {"href": f"{BASE_URI}collections/{collection_id}/items", "rel": "parent"},
         {"href": f"{BASE_URI}collections/{collection_id}", "rel": "parent"},
         {"href": f"{BASE_URI}collections", "rel": "collection"},
         {"href": f"{BASE_URI}stac", "rel": "root"}
@@ -324,9 +332,15 @@ def stac_search():
         item_collection, params, matched, meta=metadata_related_to_collections
     )
 
+    # # remove unnecessary property to build the URL below
+    # del params['collection_id']
+    # # convert 'params' from dict to str to add to the URL
+    # params = '&'.join([f'{k}={v}' for k, v in params.items() if v is not None])
+
     # # links to this ItemCollection
     # item_collection['links'] = [
-    #     {"href": f"{BASE_URI}collections/{collection_id}/items", "rel": "self"},
+    #     {"href": f"{BASE_URI}collections/{collection_id}/items?{params}", "rel": "self"},
+    #     {"href": f"{BASE_URI}collections/{collection_id}/items", "rel": "parent"},
     #     {"href": f"{BASE_URI}collections/{collection_id}", "rel": "parent"},
     #     {"href": f"{BASE_URI}collections", "rel": "collection"},
     #     {"href": f"{BASE_URI}stac", "rel": "root"}

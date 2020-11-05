@@ -176,7 +176,7 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
             params['item_id'] = item_id
         elif ids is not None:
             default_where.append('FIND_IN_SET(id, :ids)')
-            params['ids'] = ','.join(ids)
+            params['ids'] = ids
 
         logging.info(f'get_collection_items() - default_where: {default_where}')
 
