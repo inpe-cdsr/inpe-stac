@@ -38,6 +38,7 @@ def insert_deleted_flag_to_where(where):
 
 @log_function_header
 def get_collections(collection_id=None):
+    logging.info('get_collections')
     logging.info('get_collections - collection_id: {}'.format(collection_id))
 
     kwargs = {}
@@ -48,7 +49,18 @@ def get_collections(collection_id=None):
         where = 'WHERE id = :collection_id'
         kwargs = { 'collection_id': collection_id }
 
-    query = 'SELECT * FROM stac_collection {};'.format(where)
+    # query = 'SELECT * FROM stac_collection {};'.format(where)
+    query = f'''
+        SELECT *
+        FROM stac_collection sc
+        LEFT JOIN (
+            SELECT collection, assets
+            FROM `stac_item`
+            GROUP BY collection
+        ) si
+        ON sc.id = si.collection
+        {where};
+    '''
 
     logging.info('get_collections - query: {}'.format(query))
 
@@ -58,30 +70,6 @@ def get_collections(collection_id=None):
 
     logging.info('get_collections - len(result): {}'.format(len_result(result)))
     # logging.debug('get_collections - result: {}'.format(result))
-
-    return result
-
-
-@log_function_header
-def __get_assets_by_collection(collection_id):
-    logging.info('__get_assets_by_collection - collection_id: %s', collection_id)
-
-    kwargs = { 'collection_id': collection_id }
-
-    query = '''
-        SELECT assets
-        FROM `stac_item`
-        WHERE collection = :collection_id
-        LIMIT 1;
-    '''
-
-    logging.info('__get_assets_by_collection - query:  %s', query)
-
-    result, elapsed_time = do_query(query, **kwargs)
-
-    logging.info('__get_assets_by_collection - elapsed_time:  %s', timedelta(seconds=elapsed_time))
-
-    # logging.debug('__get_assets_by_collection - result:  %s', result)
 
     return result
 
@@ -320,19 +308,17 @@ def make_json_collection(collection_result):
 
     eo_bands = []
 
-    assets = __get_assets_by_collection(collection_id)
+    # collection_result["assets"] is a string, then I convert it to a list with dictionaries
+    assets = loads(collection_result["assets"])
 
-    # if there is just one element, I get it and I create the 'eo:bands' property
-    if len(assets) == 1:
-        assets = loads(assets[0]['assets'])
-
-        for asset in assets:
-            eo_bands.append(
-                {
-                    'name': asset['band'],
-                    'common_name': asset['band']
-                }
-            )
+    # I create the 'eo:bands' property based on 'assets'
+    for asset in assets:
+        eo_bands.append(
+            {
+                'name': asset['band'],
+                'common_name': asset['band']
+            }
+        )
 
     collection = {
         'stac_version': API_VERSION,
