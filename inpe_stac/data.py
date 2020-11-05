@@ -39,37 +39,38 @@ def insert_deleted_flag_to_where(where):
 @log_function_header
 def get_collections(collection_id=None):
     logging.info('get_collections')
-    logging.info('get_collections - collection_id: {}'.format(collection_id))
+    logging.info(f'get_collections - collection_id: {collection_id}')
 
     kwargs = {}
-    where = ''
+    sc_where = si_where = ''
 
     # if there is a 'collection_id' key to search, then add the WHERE clause and the key to kwargs
     if collection_id is not None:
-        where = 'WHERE id = :collection_id'
+        sc_where = 'WHERE id = :collection_id'
+        si_where = 'WHERE collection = :collection_id'
         kwargs = { 'collection_id': collection_id }
 
-    # query = 'SELECT * FROM stac_collection {};'.format(where)
     query = f'''
         SELECT *
         FROM stac_collection sc
         LEFT JOIN (
             SELECT collection, assets
             FROM `stac_item`
+            {si_where}
             GROUP BY collection
         ) si
         ON sc.id = si.collection
-        {where};
+        {sc_where};
     '''
 
-    logging.info('get_collections - query: {}'.format(query))
+    logging.info(f'get_collections - query: {query}')
 
     result, elapsed_time = do_query(query, **kwargs)
 
-    logging.info('get_collections - elapsed_time - query: {}'.format(timedelta(seconds=elapsed_time)))
+    logging.info(f'get_collections - elapsed_time - query: {timedelta(seconds=elapsed_time)}')
 
-    logging.info('get_collections - len(result): {}'.format(len_result(result)))
-    # logging.debug('get_collections - result: {}'.format(result))
+    logging.info(f'get_collections - len(result): {len_result(result)}')
+    # logging.debug(f'get_collections - result: {result}')
 
     return result
 
