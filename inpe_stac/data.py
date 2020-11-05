@@ -474,6 +474,24 @@ def make_json_items(items, links, item_stac_extensions=None):
     return gjson
 
 
+def make_json_item_collection(item_collection, params, matched, meta=None):
+    # logging.debug(f'make_json_item_collection - item_collection: {item_collection}')
+
+    # add 'context' extension to STAC
+    # Specification: https://github.com/radiantearth/stac-spec/blob/v0.9.0/api-spec/extensions/context/README.md#context-extension-specification
+    item_collection['stac_extensions'].append('context')
+
+    item_collection['context'] = {
+        'page': params['page'],
+        'limit': params['limit'],
+        'matched': matched,
+        'returned': len(item_collection['features']),
+        'meta': None if not meta else meta
+    }
+
+    return item_collection
+
+
 def do_query(sql, **kwargs):
     start_time = time()
 

@@ -11,8 +11,8 @@ from flask import Flask, jsonify, request
 from flasgger import Swagger
 from werkzeug.exceptions import BadRequest
 
-from inpe_stac.data import get_collections, get_collection_items, \
-                            make_json_items, make_json_collection
+from inpe_stac.data import get_collections, get_collection_items, make_json_items, \
+                           make_json_collection, make_json_item_collection
 from inpe_stac.environment import BASE_URI, API_VERSION
 from inpe_stac.log import logging
 from inpe_stac.decorator import log_function_header, log_function_footer, \
@@ -151,31 +151,21 @@ def collections_collections_id_items(collection_id):
         {"href": f"{BASE_URI}stac", "rel": "root"}
     ]
 
-    items_collection = make_json_items(
+    item_collection = make_json_items(
         items, links, item_stac_extensions=['eo']
     )
 
+    item_collection = make_json_item_collection(item_collection, params, matched)
+
     # links to this ItemCollection
-    items_collection['links'] = [
+    item_collection['links'] = [
         {"href": f"{BASE_URI}collections/{collection_id}/items", "rel": "self"},
         {"href": f"{BASE_URI}collections/{collection_id}", "rel": "parent"},
         {"href": f"{BASE_URI}collections", "rel": "collection"},
         {"href": f"{BASE_URI}stac", "rel": "root"}
     ]
 
-    # add 'context' extension to STAC
-    # Specification: https://github.com/radiantearth/stac-spec/blob/v0.9.0/api-spec/extensions/context/README.md#context-extension-specification
-    items_collection['stac_extensions'].append('context')
-
-    items_collection['context'] = {
-        "page": params['page'],
-        "limit": params['limit'],
-        "matched": matched,
-        "returned": len(items_collection['features']),
-        "meta": None
-    }
-
-    return jsonify(items_collection)
+    return jsonify(item_collection)
 
 
 @app.route("/collections/<collection_id>/items/<item_id>", methods=["GET"])
@@ -326,23 +316,23 @@ def stac_search():
         {'href': f'{BASE_URI}stac', 'rel': 'root'}
     ]
 
-    items_collection = make_json_items(
+    item_collection = make_json_items(
         items, links, item_stac_extensions=['eo', 'query']
     )
 
-    # add 'context' extension to STAC
-    # Specification: https://github.com/radiantearth/stac-spec/blob/v0.9.0/api-spec/extensions/context/README.md#context-extension-specification
-    items_collection['stac_extensions'].append('context')
+    item_collection = make_json_item_collection(
+        item_collection, params, matched, meta=metadata_related_to_collections
+    )
 
-    items_collection['context'] = {
-        'page': params['page'],
-        'limit': params['limit'],
-        'matched': matched,
-        'returned': len(items_collection['features']),
-        'meta': None if not metadata_related_to_collections else metadata_related_to_collections
-    }
+    # # links to this ItemCollection
+    # item_collection['links'] = [
+    #     {"href": f"{BASE_URI}collections/{collection_id}/items", "rel": "self"},
+    #     {"href": f"{BASE_URI}collections/{collection_id}", "rel": "parent"},
+    #     {"href": f"{BASE_URI}collections", "rel": "collection"},
+    #     {"href": f"{BASE_URI}stac", "rel": "root"}
+    # ]
 
-    return jsonify(items_collection)
+    return jsonify(item_collection)
 
 
 ##################################################
