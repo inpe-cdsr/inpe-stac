@@ -14,7 +14,8 @@ from werkzeug.exceptions import BadRequest, InternalServerError
 
 from inpe_stac.log import logging
 from inpe_stac.decorator import log_function_header
-from inpe_stac.environment import API_VERSION, BASE_URI, INPE_STAC_DELETED
+from inpe_stac.environment import API_VERSION, BASE_URI, INPE_STAC_DELETED, \
+                                  DB_USER, DB_PASS, DB_HOST, DB_NAME
 
 
 pp = PrettyPrinter(indent=4)
@@ -476,7 +477,7 @@ def make_json_items(items, links, item_stac_extensions=None):
 def do_query(sql, **kwargs):
     start_time = time()
 
-    connection = f'mysql://{getenv("DB_USER")}:{getenv("DB_PASS")}@{getenv("DB_HOST")}/{getenv("DB_NAME")}'
+    connection = f'mysql://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}'
     engine = sqlalchemy.create_engine(connection)
 
     sql = text(sql)

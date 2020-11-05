@@ -11,6 +11,12 @@ FLASK_ENV = getenv('FLASK_ENV', 'production')
 
 INPE_STAC_DELETED = getenv('INPE_STAC_DELETED', '0')
 
+# database environment variables
+DB_USER = getenv('DB_USER', 'root')
+DB_PASS = getenv('DB_PASS', 'password')
+DB_HOST = getenv('DB_HOST', 'localhost')
+DB_NAME = getenv('DB_NAME', 'catalog')
+
 # default logging level in production server
 LOGGING_LEVEL = INFO
 
