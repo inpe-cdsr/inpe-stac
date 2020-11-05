@@ -28,7 +28,7 @@ app.config["SWAGGER"] = {
     "title": "INPE STAC Catalog"
 }
 
-swagger = Swagger(app, template_file="./spec/api/v0.7/STAC.yaml")
+swagger = Swagger(app, template_file="./spec/api/v0.9.0/STAC.yaml")
 
 
 @app.after_request
