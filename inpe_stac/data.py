@@ -14,27 +14,12 @@ from werkzeug.exceptions import BadRequest, InternalServerError
 
 from inpe_stac.log import logging
 from inpe_stac.decorator import log_function_header
-from inpe_stac.environment import API_VERSION, BASE_URI, INPE_STAC_DELETED, \
+from inpe_stac.environment import API_VERSION, BASE_URI, \
                                   DB_USER, DB_PASS, DB_HOST, DB_NAME
+from inpe_stac.util import calc_offset, insert_deleted_flag_to_where, len_result
 
 
 pp = PrettyPrinter(indent=4)
-
-
-def len_result(result):
-    return len(result) if result is not None else len([])
-
-
-def insert_deleted_flag_to_where(where):
-    if INPE_STAC_DELETED == '0':
-        where.insert(0, 'deleted = 0')
-    elif INPE_STAC_DELETED == '1':
-        where.insert(0, 'deleted = 1')
-    else:
-        # if INPE_STAC_DELETED flag is another string,
-        # then I don't insert this flag on the search,
-        # in other words, I search all scenes
-        pass
 
 
 @log_function_header
@@ -95,8 +80,15 @@ def __search_stac_item_view(where, params):
                 WHERE
                     {where}
             ) t
-            WHERE rn >= :page AND rn <= :limit;
+            WHERE rn >= :first_index AND rn <= :last_index;
         '''
+        # create the first and last index
+        params['first_index'] = params['offset']
+        params['last_index'] = params['offset'] + params['limit']
+
+        # remove unnecessary parameters to this search
+        del params['offset']
+        del params['limit']
     # else, I search with a normal query
     else:
         sql = f'''
@@ -104,7 +96,7 @@ def __search_stac_item_view(where, params):
             FROM stac_item
             WHERE
                 {where}
-            LIMIT :page, :limit
+            LIMIT :offset, :limit
         '''
 
     # add just where clause to query, because I want to get the number of total results
@@ -163,11 +155,13 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
     matched = 0
 
     params = {
-        'page': page - 1,
+        'offset': calc_offset(page, limit),
         'limit': limit
     }
 
     default_where = []
+
+    logging.info(f'get_collection_items() - params: {params}')
 
     # search for ids
     if item_id is not None or ids is not None:
