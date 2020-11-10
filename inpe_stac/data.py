@@ -7,6 +7,7 @@ from pprint import PrettyPrinter
 from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime, timedelta
+from flask import request
 import sqlalchemy
 from sqlalchemy.sql import text
 from time import time
@@ -16,7 +17,8 @@ from inpe_stac.log import logging
 from inpe_stac.decorator import log_function_header
 from inpe_stac.environment import API_VERSION, BASE_URI, \
                                   DB_USER, DB_PASS, DB_HOST, DB_NAME
-from inpe_stac.util import calc_offset, insert_deleted_flag_to_where, len_result
+from inpe_stac.util import calc_offset, get_query_string, \
+                           insert_deleted_flag_to_where, len_result
 
 
 pp = PrettyPrinter(indent=4)
@@ -182,10 +184,7 @@ def get_collection_items(collection_id=None, item_id=None, bbox=None, time=None,
     else:
         if bbox is not None:
             try:
-                for x in bbox.split(','):
-                    float(x)
-
-                params['min_x'], params['min_y'], params['max_x'], params['max_y'] = bbox.split(',')
+                params['min_x'], params['min_y'], params['max_x'], params['max_y'] = bbox
 
                 # replace method removes extra espace caused by multi-line String
                 default_where.append(
@@ -484,6 +483,63 @@ def make_json_item_collection(item_collection, params, matched, meta=None):
     }
 
     return item_collection
+
+
+def get_links_property_to_stac_search(params):
+    """Returns `links` property based on `params` field and HTTP method used."""
+
+    logging.info(f'stac_search_get_links_property - params: {params}')
+
+    if request.method == 'GET':
+        if params['bbox'] is not None:
+            params['bbox'] = ','.join(list(map(
+                # convert the floats to str before joining the elements
+                lambda x: str(x), params['bbox']
+            )))
+
+        # convert 'params' from dict to str to add to the URL
+        params_self = get_query_string(params)
+
+        # increase the 'page' property to go to the next page
+        params['page'] += 1
+        params_next = get_query_string(params)
+
+        # create 'links' property based on 'params' field
+        return [
+            {"href": f"{BASE_URI}stac/search?{params_self}", "rel": "self"},
+            {"href": f"{BASE_URI}stac/search?{params_next}", "rel": "next"},
+            {"href": f"{BASE_URI}stac", "rel": "root"}
+        ]
+    elif request.method == "POST":
+        if params['ids'] is not None:
+            params['ids'] = params['ids'].split(',')
+
+        body_self = {k: v for k, v in params.items() if v is not None}
+
+        # copy the values and increase the 'page' property to go to the next page
+        body_next = {**body_self, 'page': body_self['page'] + 1}
+
+        # create 'links' property based on 'params' field
+        return [
+            {
+                "href":  f"{BASE_URI}stac/search",
+                "rel": "self",
+                "method": "POST",
+                "body": body_self
+            },
+            {
+                "href":  f"{BASE_URI}stac/search",
+                "rel": "next",
+                "method": "POST",
+                "body": body_next
+            },
+            {
+                "href": f"{BASE_URI}stac",
+                "rel": "root"
+            }
+        ]
+    else:
+        return None
 
 
 def do_query(sql, **kwargs):

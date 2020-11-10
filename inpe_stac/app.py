@@ -11,12 +11,13 @@ from flask import Flask, jsonify, request
 from flasgger import Swagger
 from werkzeug.exceptions import BadRequest
 
-from inpe_stac.data import get_collections, get_collection_items, make_json_items, \
-                           make_json_collection, make_json_item_collection
+from inpe_stac.data import get_collections, get_collection_items, get_links_property_to_stac_search, \
+                           make_json_collection, make_json_items, make_json_item_collection
+from inpe_stac.decorator import catch_generic_exceptions, \
+                                log_function_footer, log_function_header
 from inpe_stac.environment import BASE_URI, API_VERSION
 from inpe_stac.log import logging
-from inpe_stac.decorator import log_function_header, log_function_footer, \
-                                catch_generic_exceptions
+from inpe_stac.util import get_query_string
 
 
 app = Flask(__name__)
@@ -138,10 +139,16 @@ def collections_collections_id_items(collection_id):
         'bbox': request.args.get('bbox', None),
         'time': request.args.get('time', None),
         'ids': request.args.get('ids', None),
-        'intersects': request.args.get('intersects', None),  # not implemented yet
+        # 'intersects': request.args.get('intersects', None),  # not implemented yet
         'page': int(request.args.get('page', 1)),
         'limit': int(request.args.get('limit', 10))
     }
+
+    if params['bbox'] is not None:
+        # convert 'str' to list of floats
+        params['bbox'] = list(map(
+            lambda x: float(x), params['bbox'].split(',')
+        ))
 
     logging.info(f'collections_collections_id_items - params: {params}')
 
@@ -163,15 +170,22 @@ def collections_collections_id_items(collection_id):
 
     # remove unnecessary property to build the URL below
     del params['collection_id']
+
+    if params['bbox'] is not None:
+        params['bbox'] = ','.join(list(map(
+            # convert the floats to str before joining the elements
+            lambda x: str(x), params['bbox']
+        )))
+
     # convert 'params' from dict to str to add to the URL
-    params = '&'.join([f'{k}={v}' for k, v in params.items() if v is not None])
+    params = get_query_string(params)
 
     # links to this ItemCollection
     item_collection['links'] = [
         {"href": f"{BASE_URI}collections/{collection_id}/items?{params}", "rel": "self"},
-        {"href": f"{BASE_URI}collections/{collection_id}/items", "rel": "parent"},
-        {"href": f"{BASE_URI}collections/{collection_id}", "rel": "parent"},
-        {"href": f"{BASE_URI}collections", "rel": "collection"},
+        {"href": f"{BASE_URI}collections/{collection_id}/items", "rel": "child"},
+        {"href": f"{BASE_URI}collections/{collection_id}", "rel": "collection"},
+        {"href": f"{BASE_URI}collections", "rel": "parent"},
         {"href": f"{BASE_URI}stac", "rel": "root"}
     ]
 
@@ -273,7 +287,28 @@ def stac_search():
 
     logging.info(f'stac_search - method: {request.method}')
 
-    if request.method == "POST":
+    if request.method == 'GET':
+        logging.info('stac_search() - request.args: %s', request.args)
+
+        params = {
+            'bbox': request.args.get('bbox', None),
+            'time': request.args.get('time', None),
+            'ids': request.args.get('ids', None),
+            'collections': request.args.get('collections', None),
+            'page': int(request.args.get('page', 1)),
+            'limit': int(request.args.get('limit', 10))
+        }
+
+        if params['collections'] is not None:
+            params['collections'] = params['collections'].split(',')
+
+        if params['bbox'] is not None:
+            # convert 'str' to list of floats
+            params['bbox'] = list(map(
+                lambda x: float(x), params['bbox'].split(',')
+            ))
+
+    elif request.method == "POST":
         if request.is_json:
             request_json = request.get_json()
 
@@ -289,31 +324,24 @@ def stac_search():
                 'query': request_json.get('query', None)
             }
 
-            if params['bbox'] is not None:
-                params['bbox'] = ','.join([str(x) for x in params['bbox']])
-
             if params['ids'] is not None:
                 params['ids'] = ','.join(params['ids'])
 
-            # if params['collections'] is not None:
-            #     params['collections'] = ','.join([collection for collection in params['collections']])
+            if params['bbox'] is not None:
+                # convert list of values to list of floats
+                # because I can receive something is not float
+                params['bbox'] = list(map(
+                    lambda x: float(x), params['bbox']
+                ))
+
         else:
             raise BadRequest('POST Request must be an application/json')
 
-    elif request.method == 'GET':
-        logging.info('stac_search() - request.args: %s', request.args)
+    if params['page'] < 1:
+        params['page'] = 1
 
-        params = {
-            'bbox': request.args.get('bbox', None),
-            'time': request.args.get('time', None),
-            'ids': request.args.get('ids', None),
-            'collections': request.args.get('collections', None),
-            'page': int(request.args.get('page', 1)),
-            'limit': int(request.args.get('limit', 10))
-        }
-
-        if isinstance(params['collections'], str):
-            params['collections'] = params['collections'].split(',')
+    if params['limit'] < 0:
+        params['limit'] = 0
 
     logging.info(f'stac_search() - params: {params}')
 
@@ -334,19 +362,10 @@ def stac_search():
         item_collection, params, matched, meta=metadata_related_to_collections
     )
 
-    # # remove unnecessary property to build the URL below
-    # del params['collection_id']
-    # # convert 'params' from dict to str to add to the URL
-    # params = '&'.join([f'{k}={v}' for k, v in params.items() if v is not None])
+    links = get_links_property_to_stac_search(params)
 
-    # # links to this ItemCollection
-    # item_collection['links'] = [
-    #     {"href": f"{BASE_URI}collections/{collection_id}/items?{params}", "rel": "self"},
-    #     {"href": f"{BASE_URI}collections/{collection_id}/items", "rel": "parent"},
-    #     {"href": f"{BASE_URI}collections/{collection_id}", "rel": "parent"},
-    #     {"href": f"{BASE_URI}collections", "rel": "collection"},
-    #     {"href": f"{BASE_URI}stac", "rel": "root"}
-    # ]
+    if links is not None:
+        item_collection['links'] = links
 
     return jsonify(item_collection)
 

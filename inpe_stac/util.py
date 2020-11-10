@@ -17,6 +17,12 @@ def calc_offset(page, limit):
     return page * limit
 
 
+def get_query_string(params):
+    return '&'.join([
+        f'{k}={v}' for k, v in params.items() if v is not None
+    ])
+
+
 def insert_deleted_flag_to_where(where):
     if INPE_STAC_DELETED == '0':
         where.insert(0, 'deleted = 0')
