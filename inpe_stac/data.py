@@ -1,12 +1,12 @@
 
-from os import getenv
-from functools import reduce
-from json import loads
-from pprint import PrettyPrinter
-
 from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime, timedelta
+from functools import reduce
+from json import loads
+from pprint import PrettyPrinter
+from os import getenv
+
 from flask import request
 import sqlalchemy
 from sqlalchemy.sql import text
