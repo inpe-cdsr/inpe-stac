@@ -5,7 +5,7 @@ from time import time, strftime, gmtime
 from traceback import format_exc, print_stack
 
 from flask import jsonify
-from werkzeug.exceptions import InternalServerError
+from werkzeug.exceptions import HTTPException, InternalServerError, NotFound
 
 from inpe_stac.log import logging
 
@@ -50,19 +50,29 @@ def catch_generic_exceptions(function):
             return function(*args, **kwargs)
 
         # generic exception
+        except HTTPException as error:
+            logging.error('catch_generic_exceptions()')
+            logging.error(f'{function.__name__}() - code: {error.code}, description: {error.description}')
+
+            return jsonify({
+                "code": str(error.code),
+                "description": error.description
+            }), error.code
+
+        # generic exception
         except Exception as error:
-            logging.critical('catch_generic_exceptions')
+            logging.critical('catch_generic_exceptions()')
 
             error_message = f'An unexpected error ocurred. Please, contact the administrator. Error: {error}'
 
             print_traceback = (f'Error message: {error_message}\n'
                                f'Traceback: {format_exc()}')
 
-            logging.critical(f'{function.__name__} - {print_traceback}')
+            logging.critical(f'{function.__name__}() - {print_traceback}')
 
-            raise InternalServerError(jsonify({
+            return jsonify({
                 "code": "500",
                 "description": error_message
-            }))
+            }), 500
 
     return wrapper

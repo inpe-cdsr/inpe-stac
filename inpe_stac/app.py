@@ -9,7 +9,7 @@ OpenAPI definition: https://stacspec.org/STAC-ext-api.html
 
 from flask import Flask, jsonify, request
 from flasgger import Swagger
-from werkzeug.exceptions import BadRequest
+from werkzeug.exceptions import BadRequest, NotFound
 
 from inpe_stac.data import get_collections, get_collection_items, get_links_property_to_stac_search, \
                            make_json_collection, make_json_items, make_json_item_collection
@@ -114,6 +114,7 @@ def collections():
 def collections_collections_id(collection_id):
     """
     Specification:
+        - https://stacspec.org/STAC-api.html#operation/describeCollection
         - https://github.com/radiantearth/stac-spec/blob/v0.9.0/collection-spec/collection-spec.md#collection-fields
     """
 
@@ -121,7 +122,7 @@ def collections_collections_id(collection_id):
 
     # if there is not a result, then it returns an empty collection
     if result is None:
-        return jsonify({})
+        raise NotFound('The requested URI was not found.')
 
     # get the only one element inside the list and create the GeoJSON related to collection
     collection = make_json_collection(result[0])
