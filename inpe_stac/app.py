@@ -40,7 +40,8 @@ def after_request(response):
 
 ##################################################
 # OGC API - Features Endpoints
-# Specification: https://github.com/radiantearth/stac-spec/blob/v0.9.0/api-spec/api-spec.md#ogc-api---features-endpoints
+# Specification:
+# https://github.com/radiantearth/stac-spec/blob/v0.9.0/api-spec/api-spec.md#ogc-api---features-endpoints
 ##################################################
 
 @app.route("/", methods=["GET"])
@@ -65,16 +66,20 @@ def index():
 @log_function_footer
 @catch_generic_exceptions
 def conformance():
-    conforms = {
-        "conformsTo": [
-            "http://www.opengis.net/spec/wfs-1/3.0/req/core",
-            "http://www.opengis.net/spec/wfs-1/3.0/req/oas30",
-            "http://www.opengis.net/spec/wfs-1/3.0/req/html",
-            "http://www.opengis.net/spec/wfs-1/3.0/req/geojson"
-        ]
-    }
+    """
+    Specification:
+        - https://stacspec.org/STAC-api.html#operation/getConformanceDeclaration
+        - https://github.com/radiantearth/stac-spec/blob/v0.9.0/api-spec/api-spec.md#ogc-api---features-endpoints
+    """
 
-    return jsonify(conforms)
+    return jsonify({
+        "conformsTo": [
+            "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",
+            "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30",
+            "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/html",
+            "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson"
+        ]
+    })
 
 
 @app.route("/collections", methods=["GET"])
@@ -83,7 +88,8 @@ def conformance():
 @catch_generic_exceptions
 def collections():
     """
-    Specification: https://github.com/radiantearth/stac-spec/blob/v0.9.0/collection-spec/collection-spec.md#collection-fields
+    Specification:
+        - https://github.com/radiantearth/stac-spec/blob/v0.9.0/collection-spec/collection-spec.md#collection-fields
     """
 
     result = get_collections()
@@ -106,7 +112,8 @@ def collections():
 @catch_generic_exceptions
 def collections_collections_id(collection_id):
     """
-    Specification: https://github.com/radiantearth/stac-spec/blob/v0.9.0/collection-spec/collection-spec.md#collection-fields
+    Specification:
+        - https://github.com/radiantearth/stac-spec/blob/v0.9.0/collection-spec/collection-spec.md#collection-fields
     """
 
     result = get_collections(collection_id)
@@ -127,7 +134,7 @@ def collections_collections_id(collection_id):
 @catch_generic_exceptions
 def collections_collections_id_items(collection_id):
     """
-    Specifications:
+    Specification:
         - https://github.com/radiantearth/stac-spec/blob/v0.9.0/api-spec/api-spec.md#filter-parameters-and-fields
     """
 
