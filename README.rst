@@ -58,7 +58,7 @@ Build a new image using the Dockerfile (development or production):
 .. code-block:: shell
 
         docker build -t inpe-cdsr-inpe-stac -f Dockerfile . --no-cache
-        docker build -t registry.dpi.inpe.br/inpe-cdsr/inpe-stac:1.0.1 -f Dockerfile . --no-cache
+        docker build -t registry.dpi.inpe.br/inpe-cdsr/inpe-stac:1.0.2 -f Dockerfile . --no-cache
 
 
 Inside ``docker-compose.yml`` file there are two services
@@ -74,4 +74,4 @@ If you have credentials, then push the image to your registry:
 
 .. code-block:: shell
 
-        docker push registry.dpi.inpe.br/inpe-cdsr/inpe-stac:1.0.1
+        docker push registry.dpi.inpe.br/inpe-cdsr/inpe-stac:1.0.2

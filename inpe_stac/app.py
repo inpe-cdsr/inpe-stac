@@ -238,7 +238,10 @@ def collections_collections_id_items_items_id(collection_id, item_id):
 @catch_generic_exceptions
 def stac():
     """
-    Specification: https://github.com/radiantearth/stac-spec/blob/v0.9.0/catalog-spec/catalog-spec.md#catalog-fields
+    Specifications:
+    - https://stacspec.org/STAC-api.html#operation/getLandingPage
+    - https://github.com/radiantearth/stac-spec/blob/v0.9.0/api-spec/api-spec.md#stac-endpoints
+    - https://github.com/radiantearth/stac-spec/blob/v0.9.0/catalog-spec/catalog-spec.md#catalog-fields
     """
 
     collections = get_collections()
@@ -247,25 +250,57 @@ def stac():
         "stac_version": API_VERSION,
         'stac_extensions': [],
         "id": "inpe-stac",
+        "title": "INPE STAC",
         "description": "INPE STAC Catalog",
         "links": [
             {
                 "href": f"{BASE_URI}stac",
-                "rel": "self"
+                "rel": "self",
+                "type": "application/json",
+                "title": "This document"
+            },
+            # {"href": f"{BASE_URI}docs", "rel": "service"},
+            # {
+            #     "href": "http://data.example.org/api",
+            #     "rel": "service-desc",
+            #     "type": "application/vnd.oai.openapi+json;version=3.0",
+            #     "title": "the API definition"
+            # },
+            # {
+            #     "href": "http://data.example.org/api.html",
+            #     "rel": "service-doc",
+            #     "type": "text/html",
+            #     "title": "the API documentation"
+            # },
+            {
+                "href": f"{BASE_URI}conformance",
+                "rel": "conformance",
+                "type": "application/json",
+                "title": "OGC API conformance classes implemented by this server"
             },
             {
                 "href": f"{BASE_URI}collections",
-                "rel": "collections"
+                "rel": "data",
+                "type": "application/json",
+                "title": "Information about the feature collections"
+            },
+            {
+                "href": f"{BASE_URI}stac/search",
+                "rel": "search",
+                "type": "application/json",
+                "title": "Search across feature collections"
             }
         ]
     }
 
+    # add links to the available collections
     for collection in collections:
         catalog["links"].append(
             {
                 "href": f"{BASE_URI}collections/{collection['id']}",
                 "rel": "child",
-                "title": collection['id']
+                "type": "application/json",
+                "title": f"{collection['id']} collection"
             }
         )
 
@@ -279,8 +314,9 @@ def stac():
 def stac_search():
     """
     Specifications:
-        - https://github.com/radiantearth/stac-spec/blob/v0.9.0/api-spec/api-spec.md#filter-parameters-and-fields
-        - https://github.com/radiantearth/stac-spec/blob/v0.9.0/api-spec/extensions/query/README.md
+    - https://github.com/radiantearth/stac-spec/blob/v0.9.0/api-spec/api-spec.md#stac-endpoints
+    - https://github.com/radiantearth/stac-spec/blob/v0.9.0/api-spec/api-spec.md#filter-parameters-and-fields
+    - https://github.com/radiantearth/stac-spec/blob/v0.9.0/api-spec/extensions/query/README.md
     """
 
     logging.info('stac_search')

@@ -1,8 +1,10 @@
 
+from datetime import timedelta
 from functools import wraps
 from time import time, strftime, gmtime
-from datetime import timedelta
 from traceback import format_exc, print_stack
+
+from flask import jsonify
 from werkzeug.exceptions import InternalServerError
 
 from inpe_stac.log import logging
@@ -49,15 +51,18 @@ def catch_generic_exceptions(function):
 
         # generic exception
         except Exception as error:
-            error_message = 'An unexpected error ocurred. Please, contact the administrator.' + '\nError: ' + str(error)
+            logging.critical('catch_generic_exceptions')
 
-            print_traceback = 'Error message: {0}\n{1}'.format(error_message, format_exc())
+            error_message = f'An unexpected error ocurred. Please, contact the administrator. Error: {error}'
 
-            logging.info('{0}() - {1}'.format(
-                function.__name__,
-                print_traceback
-            ))
+            print_traceback = (f'Error message: {error_message}\n'
+                               f'Traceback: {format_exc()}')
 
-            raise InternalServerError(error_message + 'Error: ' + str(error))
+            logging.critical(f'{function.__name__} - {print_traceback}')
+
+            raise InternalServerError(jsonify({
+                "code": "500",
+                "description": error_message
+            }))
 
     return wrapper
