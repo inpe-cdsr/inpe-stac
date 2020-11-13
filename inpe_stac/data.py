@@ -317,7 +317,7 @@ def make_json_collection(collection_result):
 
     collection = {
         'stac_version': API_VERSION,
-        'stac_extensions': ['eo'],
+        'stac_extensions': [],
         'id': collection_id,
         'title': collection_id,
         'description': collection_result['description'],
@@ -329,7 +329,7 @@ def make_json_collection(collection_result):
             ],
             'temporal': [ start_date, end_date ]
         },
-        'properties': {
+        'summaries': {
             'eo:bands': eo_bands
         },
         'links': [

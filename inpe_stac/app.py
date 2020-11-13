@@ -89,21 +89,22 @@ def conformance():
 def collections():
     """
     Specification:
+        - https://stacspec.org/STAC-api.html#operation/getCollections
         - https://github.com/radiantearth/stac-spec/blob/v0.9.0/collection-spec/collection-spec.md#collection-fields
     """
 
     result = get_collections()
 
-    collections = {
-        'collections': []
-    }
+    collections = []
 
     for collection in result:
-        collections['collections'].append(
+        collections.append(
             make_json_collection(collection)
         )
 
-    return jsonify(collections)
+    return jsonify({
+        'collections': collections
+    })
 
 
 @app.route("/collections/<collection_id>", methods=["GET"])
